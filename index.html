@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURA — Умные напольные весы</title>
+<meta name="description" content="AURA — умные весы с точностью ±50 г, 13 показателей тела и приложением без рекламы.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAF7F2; --bg2:#F1EBE1; --surface:#FFFFFF;
+  --ink:#1C1B18; --muted:#6E6A61; --faint:#9B968B;
+  --mint:#9ED9C3; --mint-deep:#2E7D64; --mint-soft:#E4F3EC; --mint-glow:#7FE7C4;
+  --amber:#E9B44C; --danger:#C4574A; --info:#4A7DDB;
+  --line:#E7E0D4; --scrim:rgba(28,27,24,.45);
+  --r-sm:12px; --r-md:20px; --r-lg:32px;
+  --sh-md:0 8px 32px rgba(28,27,24,.07); --sh-lg:0 24px 64px rgba(28,27,24,.12);
+  --nav-h:72px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scrollbar-color:var(--mint-deep) var(--bg2);scrollbar-width:thin}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--mint-deep);border-radius:8px;border:2px solid var(--bg2)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink)}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;opacity:.045;mix-blend-mode:multiply;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section[id]{scroll-margin-top:calc(var(--nav-h) + 16px)}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--mint-deep);outline-offset:3px;border-radius:4px}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--nav-h);background:rgba(250,247,242,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid transparent;transition:border-color .3s,box-shadow .3s}
+nav.scrolled{border-bottom-color:var(--line);box-shadow:0 4px 24px rgba(28,27,24,.05)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;height:var(--nav-h)}
+.logo{font-family:'Playfair Display',serif;font-size:24px;font-weight:600;letter-spacing:4px;color:var(--ink);text-decoration:none}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{text-decoration:none;color:var(--muted);font-size:14px;font-weight:500;position:relative;padding:6px 0;transition:color .2s}
+.nav-links a::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--mint-deep);border-radius:2px;transition:width .25s}
+.nav-links a:hover,.nav-links a.active{color:var(--ink)}
+.nav-links a.active::after{width:100%}
+.nav-cta{background:var(--ink);color:#fff;border:none;padding:11px 24px;border-radius:100px;font-size:14px;font-weight:500;transition:transform .2s,background .2s}
+.nav-cta:hover{background:#3a3833;transform:translateY(-1px)}
+.nav-cta:active{transform:scale(.97)}
+.burger{display:none;flex-direction:column;gap:5px;background:none;border:none;padding:8px}
+.burger span{width:24px;height:2px;background:var(--ink);border-radius:2px;transition:.3s}
+.burger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mnav{position:fixed;top:var(--nav-h);left:0;right:0;z-index:99;background:var(--surface);border-bottom:1px solid var(--line);padding:12px 24px 24px;transform:translateY(-115%);transition:transform .35s cubic-bezier(.4,0,.2,1);box-shadow:var(--sh-md)}
+.mnav.open{transform:translateY(0)}
+.mnav a{display:block;padding:14px 4px;color:var(--ink);text-decoration:none;font-weight:500;border-bottom:1px solid var(--line)}
+.mnav .nav-cta{width:100%;margin-top:16px;padding:14px}
+
+/* HERO */
+.hero{position:relative;padding:calc(var(--nav-h) + 64px) 0 80px;min-height:100vh;display:flex;align-items:center;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;opacity:.55}
+.blob-1{width:520px;height:520px;background:radial-gradient(circle,var(--mint) 0%,transparent 70%);top:-120px;right:-100px;animation:drift 14s ease-in-out infinite alternate}
+.blob-2{width:420px;height:420px;background:radial-gradient(circle,#EBD9BE 0%,transparent 70%);bottom:-140px;left:-120px;animation:drift 18s ease-in-out infinite alternate-reverse}
+@keyframes drift{to{transform:translate(50px,40px) scale(1.12)}}
+.hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--mint-soft);color:var(--mint-deep);padding:8px 16px;border-radius:100px;font-size:13px;font-weight:600;margin-bottom:24px}
+.hero-badge::before{content:'';width:7px;height:7px;background:var(--mint-deep);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(40px,5vw,64px);font-weight:500;line-height:1.08;letter-spacing:-1px;margin-bottom:24px}
+.hero h1 em{font-style:italic;color:var(--mint-deep)}
+.hero-sub{font-size:18px;color:var(--muted);margin-bottom:36px;max-width:480px}
+.hero-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:32px}
+.btn-primary{background:var(--ink);color:#fff;border:none;padding:16px 32px;border-radius:100px;font-size:15px;font-weight:600;display:inline-flex;align-items:center;gap:10px;transition:transform .2s,background .2s,box-shadow .2s}
+.btn-primary:hover{background:#3a3833;transform:translateY(-2px);box-shadow:0 12px 28px rgba(28,27,24,.18)}
+.btn-primary:active{transform:scale(.98)}
+.btn-ghost{background:none;border:none;color:var(--ink);padding:16px 10px;font-size:15px;font-weight:600;display:inline-flex;gap:8px;align-items:center;text-decoration:none;transition:gap .2s}
+.btn-ghost:hover{gap:14px}
+.finish-row{display:flex;align-items:center;gap:14px}
+.finish-label{font-size:13px;color:var(--faint)}
+.finish-label b{color:var(--ink);font-weight:600}
+.swatches{display:flex;gap:10px}
+.swatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);transition:transform .2s,box-shadow .2s}
+.swatch:hover{transform:scale(1.12)}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--mint-deep);transform:scale(1.12)}
+.hero-art{position:relative;will-change:transform}
+.hero-art svg{width:100%;height:auto;display:block;animation:float 6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-16px)}}
+.finish-cream{--scaleTop:#EFE7DA;--scaleEdge:#FFFFFF;--scaleInk:rgba(70,58,40,.45);--sensor:rgba(70,58,40,.07)}
+.finish-graphite{--scaleTop:#34322D;--scaleEdge:#232119;--scaleInk:rgba(255,255,255,.55);--sensor:rgba(255,255,255,.10)}
+.finish-sage{--scaleTop:#C7D1BF;--scaleEdge:#F2F5EE;--scaleInk:rgba(45,58,45,.5);--sensor:rgba(45,58,45,.08)}
+.hero-stats{display:flex;gap:44px;margin-top:8px;justify-content:center}
+.hero-stat{text-align:center}
+.hero-stat b{display:block;font-size:28px;font-weight:700;letter-spacing:-.5px}
+.hero-stat span{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1.5px}
+
+/* MARQUEE */
+.mq{border-block:1px solid var(--line);background:var(--surface);overflow:hidden;padding:18px 0}
+.mq-track{display:flex;gap:56px;width:max-content;animation:mq 26s linear infinite}
+.mq:hover .mq-track{animation-play-state:paused}
+.mq-item{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap}
+.mq-item svg{width:18px;height:18px;stroke:var(--mint-deep)}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* SECTIONS */
+section{padding:100px 0}
+.section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--mint-deep);margin-bottom:16px}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,48px);font-weight:500;line-height:1.14;letter-spacing:-.5px;margin-bottom:20px}
+.section-sub{font-size:17px;color:var(--muted);max-width:560px}
+.section-head{text-align:center;margin-bottom:64px}
+.section-head .section-sub{margin:0 auto}
+
+/* FEATURES */
+.features{background:var(--bg2)}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feature-card{background:var(--surface);padding:40px 32px;border-radius:var(--r-md);border:1px solid transparent;transition:transform .3s,box-shadow .3s,border-color .3s}
+.feature-card:hover{transform:translateY(-6px);box-shadow:var(--sh-md);border-color:var(--mint)}
+.feature-icon{width:56px;height:56px;background:var(--mint-soft);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.feature-icon svg{width:26px;height:26px;stroke:var(--mint-deep)}
+.feature-card h3{font-size:20px;font-weight:600;margin-bottom:12px}
+.feature-card p{font-size:15px;color:var(--muted)}
+
+/* SHOWCASE */
+.showcase-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.showcase-img{border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);aspect-ratio:4/3;background:var(--bg2)}
+.showcase-img svg{width:100%;height:100%;display:block}
+.check-list{list-style:none;display:flex;flex-direction:column;gap:16px;margin-top:32px}
+.check-list li{display:flex;align-items:center;gap:14px;font-size:15px;font-weight:500}
+.check-list li::before{content:'';width:24px;height:24px;flex-shrink:0;background:var(--mint);border-radius:50%;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");background-size:13px;background-position:center;background-repeat:no-repeat}
+
+/* APP */
+.app{background:var(--bg2)}
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.app-feats{display:flex;flex-direction:column;gap:28px;margin-top:36px}
+.app-feat{display:flex;gap:16px}
+.app-num{width:36px;height:36px;background:var(--mint);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.app-feat h4{font-size:16px;font-weight:600;margin-bottom:4px}
+.app-feat p{font-size:14px;color:var(--muted)}
+.phone-wrap{display:flex;justify-content:center}
+.phone{width:310px;background:#FFFDF9;border:10px solid var(--ink);border-radius:44px;box-shadow:var(--sh-lg);overflow:hidden;font-size:12px}
+.ph-status{display:flex;justify-content:space-between;padding:12px 20px 4px;font-weight:600;font-size:12px}
+.ph-head{display:flex;justify-content:space-between;align-items:center;padding:8px 20px 12px}
+.ph-head b{font-size:19px;font-weight:700}
+.ph-ava{width:32px;height:32px;border-radius:50%;background:var(--bg2);position:relative}
+.ph-ava::after{content:'';position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;background:var(--mint-deep);border:2px solid #FFFDF9;border-radius:50%}
+.ph-sync{margin:0 16px;background:var(--mint);color:#fff;text-align:center;padding:9px;border-radius:12px;font-weight:600;font-size:11.5px}
+.ph-gauge{position:relative;width:210px;margin:22px auto 6px}
+.ph-gauge svg{width:100%;display:block;transform:rotate(-90deg)}
+.ph-gauge .track{stroke:#EFE9DF}
+.ph-gauge .prog{stroke:var(--mint);stroke-dasharray:527.8;stroke-dashoffset:527.8;transition:stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1) .2s}
+.in .ph-gauge .prog{stroke-dashoffset:116}
+.ph-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.ph-center b{font-size:42px;font-weight:700;letter-spacing:-1px}
+.ph-center span{color:var(--faint)}
+.ph-goal{background:var(--mint);color:#fff;padding:4px 14px;border-radius:100px;font-size:11px;font-weight:600;margin-top:6px}
+.ph-dots{display:flex;gap:6px;justify-content:center;margin:10px 0 16px}
+.ph-dots i{width:6px;height:6px;border-radius:50%;background:var(--mint)}
+.ph-dots i:first-child{background:var(--mint-deep)}
+.ph-sec{padding:0 16px;font-weight:700;font-size:13.5px;margin-bottom:10px}
+.ph-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px}
+.ph-card{background:#FBF7EF;border-radius:14px;padding:12px}
+.ph-card small{color:var(--muted);font-size:10.5px;display:block}
+.ph-card b{font-size:19px;font-weight:700}
+.ph-card em{font-style:normal;font-size:10.5px;color:var(--mint-deep);font-weight:600;display:block}
+.ph-card em.avg{color:var(--muted)}
+.ph-trend{margin:0 16px 14px;background:#FBF7EF;border-radius:14px;padding:12px}
+.ph-trend svg{width:100%;display:block}
+.ph-trend .line{stroke:var(--mint-deep);stroke-dasharray:400;stroke-dashoffset:400;transition:stroke-dashoffset 1.6s ease .4s}
+.in .ph-trend .line{stroke-dashoffset:0}
+.ph-days{display:flex;justify-content:space-between;color:var(--faint);font-size:9.5px;padding:4px 4px 0}
+.ph-insight{margin:0 16px 16px;background:#FBF7EF;border-radius:14px;padding:14px}
+.ph-insight b{font-size:12.5px;display:block;margin-bottom:6px}
+.ph-insight p{font-size:11px;color:var(--muted);line-height:1.5}
+.ph-plan-btn{margin-top:10px;background:var(--mint);border:none;color:#fff;font-weight:600;font-size:11px;padding:7px 16px;border-radius:100px;transition:background .2s}
+.ph-plan-btn:hover{background:var(--mint-deep)}
+.ph-plan{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s}
+.ph-plan.open{grid-template-rows:1fr}
+.ph-plan>div{overflow:hidden}
+.ph-plan ul{list-style:none;padding-top:10px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+.ph-plan li::before{content:'✦ ';color:var(--mint-deep)}
+.ph-nav{display:flex;justify-content:space-around;border-top:1px solid var(--line);padding:12px 8px 16px;background:#fff}
+.ph-nav div{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--faint)}
+.ph-nav div.on{color:var(--mint-deep);font-weight:600}
+.ph-nav svg{width:18px;height:18px}
+
+/* SPECS */
+.specs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.spec-card{background:var(--surface);padding:36px 24px;border-radius:var(--r-md);text-align:center;border:1px solid var(--line);transition:border-color .3s,transform .3s}
+.spec-card:hover{border-color:var(--mint);transform:translateY(-4px)}
+.spec-val{font-family:'Playfair Display',serif;font-size:42px;font-weight:500;margin-bottom:6px}
+.spec-val span{font-size:20px;color:var(--faint)}
+.spec-lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+
+/* TESTIMONIALS */
+.testimonials{background:var(--bg2)}
+.test-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.test-card{background:var(--surface);padding:36px 32px;border-radius:var(--r-md);display:flex;flex-direction:column;transition:transform .3s,box-shadow .3s}
+.test-card:hover{transform:translateY(-4px);box-shadow:var(--sh-md)}
+.stars{color:var(--amber);letter-spacing:3px;margin-bottom:18px}
+.test-card p{font-size:15px;line-height:1.7;flex:1;margin-bottom:24px}
+.test-who{display:flex;align-items:center;gap:14px}
+.test-ava{width:44px;height:44px;border-radius:50%;background:var(--mint);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.test-who b{font-size:14px;display:block}
+.test-who span{font-size:13px;color:var(--faint)}
+
+/* FAQ */
+.faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.faq-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;transition:border-color .3s}
+.faq-item.open{border-color:var(--mint)}
+.faq-q{width:100%;background:none;border:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 28px;font-size:16px;font-weight:600;text-align:left;color:var(--ink)}
+.faq-q i{font-style:normal;font-size:22px;color:var(--mint-deep);transition:transform .3s;flex-shrink:0}
+.faq-item.open .faq-q i{transform:rotate(45deg)}
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s}
+.faq-item.open .faq-a{grid-template-rows:1fr}
+.faq-a>div{overflow:hidden}
+.faq-a p{padding:0 28px 24px;font-size:15px;color:var(--muted)}
+
+/* CTA */
+.cta{padding:120px 0}
+.cta-box{position:relative;background:var(--ink);color:#fff;border-radius:var(--r-lg);padding:80px 60px;text-align:center;overflow:hidden}
+.cta-box::before{content:'';position:absolute;top:-40%;right:-15%;width:520px;height:520px;background:radial-gradient(circle,rgba(158,217,195,.22) 0%,transparent 70%);border-radius:50%;animation:drift 12s ease-in-out infinite alternate}
+.cta-box::after{content:'';position:absolute;bottom:-50%;left:-10%;width:420px;height:420px;background:radial-gradient(circle,rgba(233,180,76,.12) 0%,transparent 70%);border-radius:50%}
+.cta-box>*{position:relative;z-index:1}
+.cta-box .section-label{color:var(--mint)}
+.cta-box .section-title{color:#fff;margin-bottom:16px}
+.cta-box .section-sub{color:rgba(255,255,255,.65);margin:0 auto 40px}
+.cta-price{display:flex;align-items:baseline;justify-content:center;gap:18px;margin-bottom:32px}
+.price-old{font-size:24px;color:rgba(255,255,255,.35);text-decoration:line-through}
+.price-new{font-family:'Playfair Display',serif;font-size:58px;font-weight:500}
+.price-new span{font-size:26px;color:rgba(255,255,255,.55)}
+.cta-btn{background:var(--mint);color:var(--ink);border:none;padding:18px 44px;border-radius:100px;font-size:16px;font-weight:700;display:inline-flex;gap:10px;align-items:center;transition:transform .2s,background .2s,box-shadow .2s}
+.cta-btn:hover{background:var(--mint-glow);transform:translateY(-2px);box-shadow:0 14px 34px rgba(158,217,195,.3)}
+.cta-trust{display:flex;justify-content:center;gap:28px;margin-top:40px;flex-wrap:wrap}
+.cta-trust span{font-size:13px;color:rgba(255,255,255,.6)}
+.cta-trust span::before{content:'✓ ';color:var(--mint)}
+
+/* FOOTER */
+footer{background:var(--ink);color:rgba(255,255,255,.6);padding:64px 0 32px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+.footer-brand .logo{color:#fff;display:block;margin-bottom:16px}
+.footer-brand p{font-size:14px;max-width:280px}
+.footer-col h4{color:#fff;font-size:14px;font-weight:600;margin-bottom:20px}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.footer-col a,.footer-col button{background:none;border:none;padding:0;color:rgba(255,255,255,.6);text-decoration:none;font-size:14px;transition:color .2s;text-align:left}
+.footer-col a:hover,.footer-col button:hover{color:#fff}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13px}
+.footer-bottom button{background:none;border:none;color:inherit;font-size:13px;padding:0}
+.footer-bottom button:hover{color:#fff}
+
+/* MODALS */
+.overlay{position:fixed;inset:0;z-index:200;background:var(--scrim);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex;animation:fade .25s}
+@keyframes fade{from{opacity:0}}
+.modal{background:var(--surface);border-radius:24px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;padding:36px;position:relative;animation:pop .3s cubic-bezier(.34,1.4,.64,1)}
+@keyframes pop{from{transform:translateY(24px) scale(.96);opacity:0}}
+.modal-x{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:16px;color:var(--muted);transition:.2s}
+.modal-x:hover{background:var(--bg2);color:var(--ink)}
+.modal h3{font-family:'Playfair Display',serif;font-size:28px;font-weight:500;margin-bottom:8px}
+.modal .m-sub{font-size:14px;color:var(--muted);margin-bottom:24px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
+.field input,.field select{width:100%;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;font-size:15px;font-family:inherit;background:var(--bg);color:var(--ink);transition:border-color .2s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--mint-deep)}
+.field input.err{border-color:var(--danger)}
+.field .err-msg{display:none;font-size:12px;color:var(--danger);margin-top:6px}
+.field.invalid .err-msg{display:block}
+.qty-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.stepper{display:flex;align-items:center;gap:4px;border:1.5px solid var(--line);border-radius:100px;padding:4px}
+.stepper button{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg2);font-size:18px;font-weight:600;transition:.2s}
+.stepper button:hover:not(:disabled){background:var(--mint)}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper output{width:40px;text-align:center;font-weight:700;font-size:16px}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;padding:18px 0;border-top:1px solid var(--line);margin-top:8px}
+.total-row span{font-size:14px;color:var(--muted)}
+.total-row b{font-family:'Playfair Display',serif;font-size:32px;font-weight:600}
+.modal .btn-primary{width:100%;justify-content:center;margin-top:8px}
+.success{text-align:center;padding:12px 0}
+.success-ico{width:72px;height:72px;margin:0 auto 20px;background:var(--mint-soft);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.success-ico svg{width:34px;height:34px;stroke:var(--mint-deep)}
+.success h3{margin-bottom:10px}
+.success p{font-size:14px;color:var(--muted);margin-bottom:8px}
+.success .ord{font-weight:700;color:var(--mint-deep)}
+.info-body{font-size:14.5px;color:var(--muted);display:flex;flex-direction:column;gap:12px}
+
+/* REVEAL */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease var(--d,0s),transform .7s ease var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none}
+  .ph-gauge .prog{stroke-dashoffset:116}
+  .ph-trend .line{stroke-dashoffset:0}
+}
+@media (max-width:960px){
+  .nav-links{display:none}
+  .burger{display:flex}
+  .hero{min-height:auto}
+  .hero-grid,.showcase-grid,.app-grid{grid-template-columns:1fr;gap:48px}
+  .hero-art{max-width:440px;margin:0 auto}
+  .features-grid,.test-grid{grid-template-columns:1fr}
+  .specs-grid{grid-template-columns:repeat(2,1fr)}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .cta-box{padding:60px 28px}
+  .price-new{font-size:44px}
+  section{padding:72px 0}
+}
+@media (max-width:520px){
+  .specs-grid,.footer-grid{grid-template-columns:1fr}
+  .hero-stats{gap:24px}
+  .modal{padding:28px 22px}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="container nav-inner">
+    <a class="logo" href="#top">AURA</a>
+    <ul class="nav-links">
+      <li><a href="#features">Возможности</a></li>
+      <li><a href="#app">Приложение</a></li>
+      <li><a href="#specs">Характеристики</a></li>
+      <li><a href="#reviews">Отзывы</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <button class="nav-cta js-order">Купить</button>
+    <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="mnav" id="mnav">
+  <a href="#features">Возможности</a>
+  <a href="#app">Приложение</a>
+  <a href="#specs">Характеристики</a>
+  <a href="#reviews">Отзывы</a>
+  <a href="#faq">FAQ</a>
+  <button class="nav-cta js-order">Купить — 7 990 ₽</button>
+</div>
+
+<!-- HERO -->
+<header class="hero" id="top">
+  <div class="blob blob-1"></div><div class="blob blob-2"></div>
+  <div class="container hero-grid">
+    <div>
+      <div class="hero-badge rv">Новинка 2026</div>
+      <h1 class="rv" style="--d:.08s">Точность,<br>которая <em>вдохновляет</em></h1>
+      <p class="hero-sub rv" style="--d:.16s">Умные напольные весы AURA измеряют 13 показателей тела, синхронизируются со смартфоном и помогают достигать целей — мягко, без давления.</p>
+      <div class="hero-actions rv" style="--d:.24s">
+        <button class="btn-primary js-order">Заказать — 7 990 ₽ <span>→</span></button>
+        <a class="btn-ghost" href="#features">Узнать больше <span>→</span></a>
+      </div>
+      <div class="finish-row rv" style="--d:.32s">
+        <span class="finish-label">Цвет: <b id="finishName">Кремовый</b></span>
+        <div class="swatches" role="group" aria-label="Выбор цвета">
+          <button class="swatch" data-finish="cream" style="background:#EFE7DA" aria-pressed="true" aria-label="Кремовый"></button>
+          <button class="swatch" data-finish="graphite" style="background:#34322D" aria-pressed="false" aria-label="Графит"></button>
+          <button class="swatch" data-finish="sage" style="background:#C7D1BF" aria-pressed="false" aria-label="Шалфей"></button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="hero-art finish-cream rv" id="heroArt" style="--d:.2s">
+        <svg viewBox="0 0 520 540" role="img" aria-label="Умные весы AURA">
+          <defs>
+            <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="14"/></filter>
+            <filter id="led" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <ellipse cx="262" cy="492" rx="168" ry="24" fill="#1C1B18" opacity=".14" filter="url(#soft)"/>
+          <g transform="rotate(-7 260 260)">
+            <rect x="72" y="88" width="380" height="380" rx="58" fill="var(--scaleEdge)" stroke="#E2DACB" stroke-width="1.5"/>
+            <rect x="72" y="72" width="380" height="380" rx="58" fill="var(--scaleTop)"/>
+            <rect x="72" y="72" width="380" height="380" rx="58" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
+            <circle cx="118" cy="118" r="15" fill="var(--sensor)"/><circle cx="406" cy="118" r="15" fill="var(--sensor)"/>
+            <circle cx="118" cy="406" r="15" fill="var(--sensor)"/><circle cx="406" cy="406" r="15" fill="var(--sensor)"/>
+            <g filter="url(#led)" fill="#7FE7C4" font-family="Inter,monospace" font-weight="600">
+              <text x="262" y="160" text-anchor="middle" font-size="52" letter-spacing="4">65.0</text>
+              <text x="352" y="160" font-size="20">kg</text>
+            </g>
+            <text x="262" y="404" text-anchor="middle" font-family="'Playfair Display',serif" font-size="24" letter-spacing="7" fill="var(--scaleInk)">AURA</text>
+            <rect x="238" y="452" width="48" height="9" rx="4.5" fill="var(--sensor)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="hero-stats rv" style="--d:.36s">
+        <div class="hero-stat"><b>±<span class="count" data-to="50">0</span> г</b><span>Точность</span></div>
+        <div class="hero-stat"><b><span class="count" data-to="13">0</span></b><span>Показателей</span></div>
+        <div class="hero-stat"><b><span class="count" data-to="4.9" data-dec="1">0</span>★</b><span>Рейтинг</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MARQUEE -->
+<div class="mq" aria-hidden="true">
+  <div class="mq-track" id="mqTrack">
+    <span class="mq-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11"/></svg>Bluetooth 5.0</span>
+    <span class="mq-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20.8 8.6a5.5 5.5 0 00-9.8-3.4 5.5 5.5 0 00-9.8 3.4c0 5.4 9.8 11 9.8 11s9.8-5.6 9.8-11z"/></svg>Apple Health</span>
+    <span class="mq-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Google Fit</span>
+    <span class="mq-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l2.4 7.2H22l-6 4.6 2.3 7.2-6.3-4.5-6.3 4.5L8 13.8 2 9.2h7.6z"/></svg>Samsung Health</span>
+    <span class="mq-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="3"/><path d="M11 18h2"/></svg>USB-C зарядка</span>
+    <span class="mq-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Гарантия 2 года</span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-head rv">
+      <div class="section-label">Возможности</div>
+      <h2 class="section-title">Всё, что нужно<br>для заботы о себе</h2>
+      <p class="section-sub">Три причины, почему AURA становится частью утреннего ритуала тысяч людей</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card rv"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg></div><h3>Высокая точность</h3><p>Четыре высокоточных сенсора измеряют вес с погрешностью всего 50 грамм — вы видите реальные изменения, а не шум.</p></div>
+      <div class="feature-card rv" style="--d:.1s"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg></div><h3>Мгновенная синхронизация</h3><p>Bluetooth 5.0 передаёт данные в приложение за секунду. Поддержка Apple Health, Google Fit и Samsung Health.</p></div>
+      <div class="feature-card rv" style="--d:.2s"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8-5-3.6-5 3.6 1.9-5.8L4 8.8h6.1z"/></svg></div><h3>Минималистичный дизайн</h3><p>Закалённое стекло, матовое покрытие и скрытый LED-дисплей. Весы, которые хочется оставить на виду.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE -->
+<section id="design">
+  <div class="container showcase-grid">
+    <div class="showcase-img rv">
+      <svg viewBox="0 0 800 600" role="img" aria-label="Весы AURA в интерьере ванной комнаты" preserveAspectRatio="xMidYMid slice">
+        <rect width="800" height="600" fill="#F3EDE3"/>
+        <rect y="430" width="800" height="170" fill="#FBF8F3"/>
+        <path d="M0 470h800M0 520h800M0 570h800M140 430v170M340 430v170M540 430v170M720 430v170" stroke="#EFE8DC" stroke-width="2"/>
+        <rect x="30" y="30" width="180" height="400" fill="#2A2A28"/>
+        <rect x="42" y="42" width="72" height="180" fill="#EAF2EE"/><rect x="126" y="42" width="72" height="180" fill="#E3EEE8"/>
+        <rect x="42" y="234" width="72" height="184" fill="#E7F0EB"/><rect x="126" y="234" width="72" height="184" fill="#DFEBE5"/>
+        <path d="M210 30q40 200 0 400l60 0q30-200 0-400z" fill="#FFFFFF" opacity=".9"/>
+        <polygon points="210,60 560,430 300,430 210,240" fill="#FFFFFF" opacity=".28"/>
+        <circle cx="470" cy="150" r="86" fill="#DCE7E1" stroke="#C9D6CF" stroke-width="4"/>
+        <path d="M430 120q40-24 80 10" stroke="#FFFFFF" stroke-width="6" fill="none" opacity=".6" stroke-linecap="round"/>
+        <rect x="330" y="290" width="330" height="26" rx="6" fill="#FFFFFF"/>
+        <rect x="340" y="316" width="310" height="86" rx="8" fill="#D9B98C"/>
+        <path d="M495 316v86" stroke="#C6A276" stroke-width="3"/>
+        <rect x="430" y="252" width="20" height="40" rx="5" fill="#B97F3E"/><rect x="436" y="244" width="8" height="10" fill="#3A3A38"/>
+        <rect x="466" y="246" width="24" height="46" rx="6" fill="#C98A44"/><rect x="473" y="238" width="9" height="10" fill="#3A3A38"/>
+        <rect x="520" y="272" width="60" height="18" rx="6" fill="#F6F1E7"/>
+        <path d="M640 340q-10 110 60 118l100 0q0-118-60-118z" fill="#FFFFFF"/>
+        <ellipse cx="700" cy="342" rx="100" ry="20" fill="#F1ECE2"/>
+        <rect x="238" y="352" width="64" height="78" rx="14" fill="#EDE6D8"/>
+        <path d="M270 352V240" stroke="#7A5B3A" stroke-width="6"/>
+        <g fill="#5F8F5A"><ellipse cx="244" cy="238" rx="26" ry="34"/><ellipse cx="292" cy="222" rx="28" ry="36"/><ellipse cx="268" cy="186" rx="26" ry="34"/><ellipse cx="236" cy="286" rx="24" ry="30"/><ellipse cx="298" cy="278" rx="24" ry="30"/></g>
+        <g fill="#7FAE74"><ellipse cx="262" cy="214" rx="18" ry="24"/><ellipse cx="284" cy="252" rx="16" ry="22"/></g>
+        <path d="M660 0q-8 60 14 96M690 0q4 70-16 110M720 0q-6 50 10 84" stroke="#6B9A62" stroke-width="4" fill="none"/>
+        <g fill="#7FAE74"><ellipse cx="672" cy="96" rx="12" ry="16"/><ellipse cx="676" cy="112" rx="10" ry="14"/><ellipse cx="700" cy="84" rx="12" ry="16"/><ellipse cx="730" cy="86" rx="11" ry="15"/><ellipse cx="658" cy="60" rx="10" ry="14"/></g>
+        <g transform="translate(300 470)">
+          <ellipse cx="70" cy="52" rx="86" ry="12" fill="#1C1B18" opacity=".08"/>
+          <rect x="0" y="6" width="140" height="46" rx="14" fill="#FFFFFF"/>
+          <rect x="0" y="0" width="140" height="46" rx="14" fill="#EFE7DA"/>
+          <text x="70" y="24" text-anchor="middle" font-family="Inter" font-size="13" fill="#8A9B90" font-weight="600">72.5</text>
+          <text x="70" y="38" text-anchor="middle" font-family="'Playfair Display',serif" font-size="8" letter-spacing="3" fill="#B4A88F">AURA</text>
+        </g>
+      </svg>
+    </div>
+    <div class="rv" style="--d:.12s">
+      <div class="section-label">В вашем пространстве</div>
+      <h2 class="section-title">Созданы,<br>чтобы дополнять интерьер</h2>
+      <p class="section-sub">Тёплый кремовый оттенок и тонкий профиль 22 мм органично вписываются в любую ванную — от скандинавской до японской эстетики.</p>
+      <ul class="check-list">
+        <li>Закалённое стекло 6 мм</li>
+        <li>Противоскользящие ножки</li>
+        <li>Автоматическое включение при шаге</li>
+        <li>До 12 месяцев без подзарядки (USB-C)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- APP -->
+<section class="app" id="app">
+  <div class="container app-grid">
+    <div class="rv">
+      <div class="section-label">Приложение</div>
+      <h2 class="section-title">Ваш персональный<br>тренер в кармане</h2>
+      <p class="section-sub">Бесплатное приложение AURA превращает цифры в понятные рекомендации и мотивирует двигаться к цели.</p>
+      <div class="app-feats">
+        <div class="app-feat"><div class="app-num">1</div><div><h4>Динамика за неделю</h4><p>Графики веса, жира, мышц и воды — всё в одном месте</p></div></div>
+        <div class="app-feat"><div class="app-num">2</div><div><h4>Умные инсайты</h4><p>AI-анализ даёт персональные советы каждый день</p></div></div>
+        <div class="app-feat"><div class="app-num">3</div><div><h4>До 8 профилей</h4><p>Одни весы — вся семья. Каждый видит только свои данные</p></div></div>
+      </div>
+    </div>
+    <div class="phone-wrap rv" style="--d:.15s">
+      <div class="phone" id="phone">
+        <div class="ph-status"><span>9:41</span><span>▮▮▮ ᯤ 86%</span></div>
+        <div class="ph-head"><b>Мои весы</b><div class="ph-ava"></div></div>
+        <div class="ph-sync">⟳ Весы синхронизированы</div>
+        <div class="ph-gauge">
+          <svg viewBox="0 0 200 200"><circle class="track" cx="100" cy="100" r="84" fill="none" stroke-width="12"/><circle class="prog" cx="100" cy="100" r="84" fill="none" stroke-width="12" stroke-linecap="round"/></svg>
+          <div class="ph-center"><b><span class="count" data-to="65.4" data-dec="1">0</span></b><span>кг</span><div class="ph-goal">Цель: 60.0 кг</div></div>
+        </div>
+        <div class="ph-dots"><i></i><i></i><i></i></div>
+        <div class="ph-sec">Состав тела</div>
+        <div class="ph-cards">
+          <div class="ph-card"><small>ИМТ</small><b>21.5</b><em>Норма</em></div>
+          <div class="ph-card"><small>Жир</small><b>18.2%</b><em>Здорово</em></div>
+          <div class="ph-card"><small>Мышцы</small><b>45.3 кг</b><em class="avg">Средне</em></div>
+          <div class="ph-card"><small>Вода</small><b>52.1%</b><em>Оптимально</em></div>
+        </div>
+        <div class="ph-sec">Динамика веса · 7 дней</div>
+        <div class="ph-trend">
+          <svg viewBox="0 0 260 84">
+            <defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9ED9C3" stop-opacity=".5"/><stop offset="1" stop-color="#9ED9C3" stop-opacity="0"/></linearGradient></defs>
+            <path d="M10 28L50 34L90 30L130 44L170 46L210 58L250 64L250 80L10 80Z" fill="url(#area)"/>
+            <path class="line" d="M10 28L50 34L90 30L130 44L170 46L210 58L250 64" fill="none" stroke-width="2.5" stroke-linecap="round"/>
+            <g fill="#fff" stroke="#2E7D64" stroke-width="2"><circle cx="10" cy="28" r="3.5"/><circle cx="50" cy="34" r="3.5"/><circle cx="90" cy="30" r="3.5"/><circle cx="130" cy="44" r="3.5"/><circle cx="170" cy="46" r="3.5"/><circle cx="210" cy="58" r="3.5"/><circle cx="250" cy="64" r="3.5"/></g>
+          </svg>
+          <div class="ph-days"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+        </div>
+        <div class="ph-insight">
+          <b>Инсайт дня</b>
+          <p>До цели осталось 2.1 кг. Отличный темп — продолжайте!</p>
+          <button class="ph-plan-btn" id="planBtn" aria-expanded="false">Показать план</button>
+          <div class="ph-plan" id="planBox"><div><ul>
+            <li>Взвешивайтесь утром натощак</li>
+            <li>Добавьте 20 минут ходьбы в день</li>
+            <li>Следите за водным балансом</li>
+          </ul></div></div>
+        </div>
+        <div class="ph-nav" aria-hidden="true">
+          <div class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Главная</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>История</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0012 2z"/></svg>Инсайты</div>
+          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>Профиль</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPECS -->
+<section id="specs">
+  <div class="container">
+    <div class="section-head rv">
+      <div class="section-label">Характеристики</div>
+      <h2 class="section-title">Цифры, которым<br>можно доверять</h2>
+    </div>
+    <div class="specs-grid">
+      <div class="spec-card rv"><div class="spec-val"><span class="count" data-to="180">0</span><span> кг</span></div><div class="spec-lbl">Макс. нагрузка</div></div>
+      <div class="spec-card rv" style="--d:.08s"><div class="spec-val">±<span class="count" data-to="50">0</span><span> г</span></div><div class="spec-lbl">Точность</div></div>
+      <div class="spec-card rv" style="--d:.16s"><div class="spec-val"><span class="count" data-to="22">0</span><span> мм</span></div><div class="spec-lbl">Толщина</div></div>
+      <div class="spec-card rv" style="--d:.24s"><div class="spec-val"><span class="count" data-to="12">0</span><span> мес</span></div><div class="spec-lbl">Батарея</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials" id="reviews">
+  <div class="container">
+    <div class="section-head rv">
+      <div class="section-label">Отзывы</div>
+      <h2 class="section-title">Нас рекомендуют</h2>
+      <p class="section-sub">Более 12 000 довольных пользователей по всей России</p>
+    </div>
+    <div class="test-grid">
+      <div class="test-card rv"><div class="stars">★★★★★</div><p>«Наконец-то весы, которые не выглядят как медицинский прибор. Стоят в ванной как элемент декора, но при этом дают точные данные.»</p><div class="test-who"><div class="test-ava">АМ</div><div><b>Анна М.</b><span>Дизайнер интерьеров</span></div></div></div>
+      <div class="test-card rv" style="--d:.1s"><div class="stars">★★★★★</div><p>«Приложение — отдельный кайф. Никакой рекламы, чистая аналитика. За 3 месяца сбросил 7 кг, потому что наконец вижу прогресс.»</p><div class="test-who"><div class="test-ava">ДК</div><div><b>Дмитрий К.</b><span>Предприниматель</span></div></div></div>
+      <div class="test-card rv" style="--d:.2s"><div class="stars">★★★★★</div><p>«Купила маме — она в восторге. Разобралась с приложением за 5 минут, теперь каждое утро начинает с взвешивания и кофе.»</p><div class="test-who"><div class="test-ava">ЕС</div><div><b>Елена С.</b><span>Маркетолог</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-head rv">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title">Частые вопросы</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item rv"><button class="faq-q" aria-expanded="false">Нужен ли смартфон, чтобы пользоваться весами?<i>+</i></button><div class="faq-a"><div><p>Нет. Вес показываются на встроенном LED-дисплее сразу при взвешивании. Приложение нужно только для анализа состава тела и истории измерений.</p></div></div></div>
+      <div class="faq-item rv" style="--d:.06s"><button class="faq-q" aria-expanded="false">Как измеряется состав тела?<i>+</i></button><div class="faq-a"><div><p>Методом биоимпедансного анализа: через стопы проходит безопасный микроток, по сопротивлению тканей рассчитываются жир, мышцы и вода. Не рекомендуется при наличии кардиостимулятора. AURA — не медицинский прибор.</p></div></div></div>
+      <div class="faq-item rv" style="--d:.12s"><button class="faq-q" aria-expanded="false">Сколько человек могут пользоваться одними весами?<i>+</i></button><div class="faq-a"><div><p>До 8 профилей. Весы автоматически узнают пользователя по последним измерениям, а каждый видит в приложении только свои данные.</p></div></div></div>
+      <div class="faq-item rv" style="--d:.18s"><button class="faq-q" aria-expanded="false">Что входит в комплект?<i>+</i></button><div class="faq-a"><div><p>Весы AURA, кабель USB-C для зарядки, краткое руководство и фирменная открытка. Аккумулятор уже установлен — можно пользоваться сразу из коробки.</p></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="buy">
+  <div class="container">
+    <div class="cta-box rv">
+      <div class="section-label">Специальное предложение</div>
+      <h2 class="section-title">Начните заботиться о себе<br>уже сегодня</h2>
+      <p class="section-sub">Бесплатная доставка по России. Гарантия 2 года. Возврат в течение 30 дней без вопросов.</p>
+      <div class="cta-price"><div class="price-old">11 990 ₽</div><div class="price-new">7 990 <span>₽</span></div></div>
+      <button class="cta-btn js-order">Оформить заказ <span>→</span></button>
+      <div class="cta-trust"><span>Бесплатная доставка</span><span>Гарантия 2 года</span><span>Возврат 30 дней</span><span>Оплата при получении</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand"><a class="logo" href="#top">AURA</a><p>Умные весы для тех, кто ценит точность, дизайн и заботу о себе.</p></div>
+      <div class="footer-col"><h4>Продукт</h4><ul>
+        <li><a href="#features">Возможности</a></li><li><a href="#specs">Характеристики</a></li><li><a href="#app">Приложение</a></li><li><button data-info="accessories">Аксессуары</button></li>
+      </ul></div>
+      <div class="footer-col"><h4>Поддержка</h4><ul>
+        <li><button data-info="delivery">Доставка</button></li><li><button data-info="warranty">Гарантия</button></li><li><a href="#faq">FAQ</a></li><li><a href="mailto:hello@aura-scale.ru">Контакты</a></li>
+      </ul></div>
+      <div class="footer-col"><h4>Компания</h4><ul>
+        <li><button data-info="about">О нас</button></li><li><button data-info="blog">Блог</button></li><li><button data-info="press">Пресса</button></li><li><button data-info="jobs">Карьера</button></li>
+      </ul></div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 AURA. Все права защищены.</div>
+      <div><button data-info="privacy" style="margin-right:20px">Политика конфиденциальности</button><button data-info="terms">Условия использования</button></div>
+    </div>
+  </div>
+</footer>
+
+<!-- ORDER MODAL -->
+<div class="overlay" id="orderOverlay" role="dialog" aria-modal="true" aria-label="Оформление заказа">
+  <div class="modal">
+    <button class="modal-x" data-close aria-label="Закрыть">✕</button>
+    <div id="orderForm">
+      <h3>Оформление заказа</h3>
+      <p class="m-sub">Заполните форму — менеджер перезвонит в течение 15 минут для подтверждения.</p>
+      <form id="form" novalidate>
+        <div class="field" id="fName"><label for="inName">Ваше имя</label><input id="inName" type="text" autocomplete="name" placeholder="Анна"><div class="err-msg">Введите имя (минимум 2 символа)</div></div>
+        <div class="field" id="fPhone"><label for="inPhone">Телефон</label><input id="inPhone" type="tel" autocomplete="tel" placeholder="+7 900 000-00-00"><div class="err-msg">Введите корректный номер (10–15 цифр)</div></div>
+        <div class="field"><label for="inFinish">Цвет</label><select id="inFinish"><option value="cream">Кремовый</option><option value="graphite">Графит</option><option value="sage">Шалфей</option></select></div>
+        <div class="field qty-row"><label style="margin:0">Количество</label>
+          <div class="stepper"><button type="button" id="qMinus" aria-label="Меньше">−</button><output id="qVal">1</output><button type="button" id="qPlus" aria-label="Больше">+</button></div>
+        </div>
+        <div class="total-row"><span>Итого с доставкой</span><b id="total">7 990 ₽</b></div>
+        <button type="submit" class="btn-primary">Подтвердить заказ <span>→</span></button>
+      </form>
+    </div>
+    <div id="orderSuccess" class="success" hidden>
+      <div class="success-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h3>Заказ принят!</h3>
+      <p>Номер заказа: <span class="ord" id="ordNum"></span></p>
+      <p>Менеджер перезвонит в течение 15 минут. Доставка бесплатная, оплата при получении.</p>
+      <button class="btn-primary" data-close style="margin-top:20px">Отлично</button>
+    </div>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="overlay" id="infoOverlay" role="dialog" aria-modal="true" aria-label="Информация">
+  <div class="modal">
+    <button class="modal-x" data-close aria-label="Закрыть">✕</button>
+    <h3 id="infoTitle"></h3>
+    <div class="info-body" id="infoBody"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)}, $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* NAV */
+var nav=$('#nav'),burger=$('#burger'),mnav=$('#mnav');
+window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',window.scrollY>10)},{passive:true});
+function closeMenu(){burger.classList.remove('open');mnav.classList.remove('open');burger.setAttribute('aria-expanded','false')}
+burger.addEventListener('click',function(){
+  var open=!mnav.classList.contains('open');
+  burger.classList.toggle('open',open);mnav.classList.toggle('open',open);
+  burger.setAttribute('aria-expanded',String(open));
+});
+$$('#mnav a').forEach(function(a){a.addEventListener('click',closeMenu)});
+
+/* MARQUEE duplicate */
+var mq=$('#mqTrack');mq.innerHTML+=mq.innerHTML;
+
+/* ACTIVE NAV */
+var links=$$('.nav-links a');
+var secObs=new IntersectionObserver(function(es){
+  es.forEach(function(e){
+    if(e.isIntersecting){
+      links.forEach(function(l){l.classList.toggle('active',l.getAttribute('href')==='#'+e.target.id)});
+    }
+  });
+},{rootMargin:'-40% 0px -55% 0px'});
+$$('section[id]').forEach(function(s){secObs.observe(s)});
+
+/* REVEAL + COUNTERS */
+function runCount(el){
+  if(el.dataset.done)return;el.dataset.done='1';
+  var to=parseFloat(el.dataset.to),dec=parseInt(el.dataset.dec||'0',10);
+  if(reduced){el.textContent=to.toFixed(dec);return}
+  var t0=null;
+  function step(t){
+    if(!t0)t0=t;var p=Math.min((t-t0)/1200,1);p=1-Math.pow(1-p,3);
+    el.textContent=(to*p).toFixed(dec);
+    if(p<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+var rvObs=new IntersectionObserver(function(es){
+  es.forEach(function(e){
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      $$('.count').forEach(function(c){if(e.target.contains(c))runCount(c)});
+      rvObs.unobserve(e.target);
+    }
+  });
+},{threshold:.15});
+$$('.rv').forEach(function(el){rvObs.observe(el)});
+var phone=$('#phone');
+var phObs=new IntersectionObserver(function(es){
+  es.forEach(function(e){if(e.isIntersecting){phone.classList.add('in');$$('.count').forEach(function(c){if(phone.contains(c))runCount(c)});phObs.disconnect()}});
+},{threshold:.3});
+phObs.observe(phone);
+
+/* PARALLAX */
+var art=$('#heroArt');
+if(!reduced){
+  var tick=false;
+  window.addEventListener('scroll',function(){
+    if(tick)return;tick=true;
+    requestAnimationFrame(function(){
+      var y=Math.min(window.scrollY,700);
+      art.style.transform='translateY('+(y*0.06)+'px)';
+      tick=false;
+    });
+  },{passive:true});
+}
+
+/* FINISH SWITCHER */
+var finishes={cream:'Кремовый',graphite:'Графит',sage:'Шалфей'};
+var inFinish=$('#inFinish');
+function setFinish(key){
+  art.className=art.className.replace(/finish-\w+/,'finish-'+key);
+  $('#finishName').textContent=finishes[key];
+  $$('.swatch').forEach(function(s){s.setAttribute('aria-pressed',String(s.dataset.finish===key))});
+  inFinish.value=key;
+}
+$$('.swatch').forEach(function(s){s.addEventListener('click',function(){setFinish(s.dataset.finish)})});
+inFinish.addEventListener('change',function(){setFinish(inFinish.value)});
+
+/* FAQ */
+$$('.faq-item').forEach(function(item){
+  item.querySelector('.faq-q').addEventListener('click',function(){
+    var open=!item.classList.contains('open');
+    $$('.faq-item.open').forEach(function(o){o.classList.remove('open');o.querySelector('.faq-q').setAttribute('aria-expanded','false')});
+    item.classList.toggle('open',open);
+    this.setAttribute('aria-expanded',String(open));
+  });
+});
+
+/* APP PLAN TOGGLE */
+var planBtn=$('#planBtn'),planBox=$('#planBox');
+planBtn.addEventListener('click',function(){
+  var open=!planBox.classList.contains('open');
+  planBox.classList.toggle('open',open);
+  planBtn.setAttribute('aria-expanded',String(open));
+  planBtn.textContent=open?'Скрыть план':'Показать план';
+});
+
+/* MODALS */
+var lastFocus=null;
+function openModal(ov){lastFocus=document.activeElement;ov.classList.add('show');document.body.style.overflow='hidden';
+  var f=ov.querySelector('input,button[data-close]');if(f)f.focus()}
+function closeModal(ov){ov.classList.remove('show');document.body.style.overflow='';if(lastFocus)lastFocus.focus()}
+$$('.overlay').forEach(function(ov){
+  ov.addEventListener('click',function(e){if(e.target===ov)closeModal(ov)});
+  $$('[data-close]').forEach(function(b){if(ov.contains(b))b.addEventListener('click',function(){closeModal(ov)})});
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){$$('.overlay.show').forEach(closeModal);closeMenu()}
+});
+
+/* ORDER */
+var orderOv=$('#orderOverlay'),qty=1,PRICE=7990;
+function fmt(n){return n.toLocaleString('ru-RU')+' ₽'}
+function renderQty(){
+  $('#qVal').textContent=qty;$('#total').textContent=fmt(PRICE*qty);
+  $('#qMinus').disabled=qty<=1;$('#qPlus').disabled=qty>=5;
+}
+$('#qMinus').addEventListener('click',function(){if(qty>1){qty--;renderQty()}});
+$('#qPlus').addEventListener('click',function(){if(qty<5){qty++;renderQty()}});
+$$('.js-order').forEach(function(b){b.addEventListener('click',function(){
+  closeMenu();
+  $('#orderForm').hidden=false;$('#orderSuccess').hidden=true;
+  renderQty();openModal(orderOv);
+})});
+$('#form').addEventListener('submit',function(e){
+  e.preventDefault();
+  var name=$('#inName').value.trim(),digits=$('#inPhone').value.replace(/\D/g,'');
+  var okN=name.length>=2,okP=digits.length>=10&&digits.length<=15;
+  $('#fName').classList.toggle('invalid',!okN);$('#inName').classList.toggle('err',!okN);
+  $('#fPhone').classList.toggle('invalid',!okP);$('#inPhone').classList.toggle('err',!okP);
+  if(!okN||!okP)return;
+  $('#ordNum').textContent='AU-26-'+Math.floor(1000+Math.random()*9000);
+  $('#orderForm').hidden=true;$('#orderSuccess').hidden=false;
+});
+['inName','inPhone'].forEach(function(id){
+  $('#'+id).addEventListener('input',function(){
+    this.classList.remove('err');this.closest('.field').classList.remove('invalid');
+  });
+});
+
+/* INFO */
+var INFO={
+  delivery:{t:'Доставка',h:'<p>Бесплатная доставка по всей России. Москва и Санкт-Петербург — курьером за 1–2 дня, остальные регионы — 3–7 дней (СДЭК, Почта России, Boxberry).</p><p>Оплата при получении: наличными или картой курьеру.</p>'},
+  warranty:{t:'Гарантия',h:'<p>На все весы AURA действует гарантия 2 года. Если что-то пойдёт не так — заменим устройство без экспертиз и ожиданий.</p><p>Возврат в течение 30 дней без объяснения причин, даже если весы уже использовались.</p>'},
+  accessories:{t:'Аксессуары',h:'<p>К весам доступны: фирменный коврик из пробки (990 ₽), запасной кабель USB-C плетёный (490 ₽) и подарочная упаковка (390 ₽).</p><p>Добавить аксессуары можно при подтверждении заказа по телефону.</p>'},
+  about:{t:'О нас',h:'<p>AURA — команда промышленных дизайнеров и инженеров, которая верит: техника для здоровья должна быть красивой и спокойной.</p><p>Мы делаем вещи, которые хочется оставить на виду, а не прятать в шкаф.</p>'},
+  blog:{t:'Блог',h:'<p>Пишем о здоровых привычках без фанатизма: как взвешиваться правильно, почему вес колеблется в течение дня и как читать графики состава тела.</p><p>Новые материалы — дважды в месяц в приложении AURA.</p>'},
+  press:{t:'Пресса',h:'<p>Пресс-кит, логотипы и фотографии продукта в высоком разрешении доступны по запросу.</p><p>Контакт для СМИ: press@aura-scale.ru</p>'},
+  jobs:{t:'Карьера',h:'<p>Мы небольшая команда и растём медленно и осознанно. Открытые позиции публикуем редко, но резюме всегда рады видеть.</p><p>Пишите: jobs@aura-scale.ru</p>'},
+  privacy:{t:'Политика конфиденциальности',h:'<p>Данные измерений хранятся локально в приложении и передаются только в выбранные вами сервисы (Apple Health, Google Fit).</p><p>Мы не продаём данные третьим лицам и не показываем рекламу. Контакт: privacy@aura-scale.ru</p>'},
+  terms:{t:'Условия использования',h:'<p>AURA — бытовой прибор для wellness-целей, не медицинское изделие. Показатели состава тела носят справочный характер.</p><p>Используя сайт и приложение, вы соглашаетесь с условиями сервиса и политикой конфиденциальности.</p>'}
+};
+var infoOv=$('#infoOverlay');
+$$('[data-info]').forEach(function(b){b.addEventListener('click',function(){
+  var d=INFO[b.dataset.info];if(!d)return;
+  $('#infoTitle').textContent=d.t;$('#infoBody').innerHTML=d.h;
+  openModal(infoOv);
+})});
+})();
+</script>
+</body>
+</html>
